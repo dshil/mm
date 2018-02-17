@@ -14,7 +14,7 @@ void mfree(void *ptr)
 {
 }
 
-Header *mm(unsigned size)
+Header *_mm(unsigned size)
 {
 	return NULL;
 }

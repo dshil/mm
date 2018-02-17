@@ -12,20 +12,11 @@ typedef union header Header;
 
 #define BLOCKSIZ 1024
 
-//              Block
-//   +---------------+-------------+
-//   | Header | Data | Data | Data |
-//   +--------+------+-------------+
-//   sizeof(Header) = sizeof(Data)
-//
-void *mmalloc(unsigned size); /* Basic malloc implementation. */
-
-/*
- * Iterate throught a list of free blocks to find a place where to put freed
- * memory. This place can be found between 2 blocks or on the one of the list
- * ends.
- */
+void *mmalloc(unsigned size);
+void *mcalloc(unsigned count, unsigned size);
+void *mrealloc(void *ptr, unsigned size);
 void mfree(void *ptr);
 
-Header *mm(unsigned size); /* Ask Kernel of an additional chunk of memory. */
+
+Header *_mm(unsigned size); /* Ask Kernel of an additional chunk of memory. */
 
