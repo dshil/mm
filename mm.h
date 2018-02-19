@@ -12,11 +12,9 @@ typedef union header Header;
 
 #define BLOCKSIZ 1024
 
-void *mmalloc(unsigned size);
-void *mcalloc(unsigned count, unsigned size);
-void *mrealloc(void *ptr, unsigned size);
+void *mmalloc(unsigned long size);
+void *mcalloc(unsigned long count, unsigned long size);
+void *mrealloc(void *ptr, unsigned long size);
 void mfree(void *ptr);
-
-
-Header *_mm(unsigned size); /* Ask Kernel of an additional chunk of memory. */
+void mfree_arbitrary(void *ptr, unsigned long size);
 
