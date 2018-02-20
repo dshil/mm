@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <sys/mman.h>
 
 #include "mm.h"
 
@@ -10,8 +11,11 @@ Header base;
 Header *freep = NULL;
 
 static void ensure_init_freelist(void);
-static Header *mm_sbrk(unsigned long size);
 static inline unsigned long num_of_blocks(unsigned long size);
+
+static Header *mm(unsigned long size, void *(*allocator)(unsigned long size));
+static void *mm_sbrk(unsigned long size);
+static void *mm_mmap(unsigned long size);
 
 void *mmalloc(const unsigned long size)
 {
@@ -37,7 +41,7 @@ void *mmalloc(const unsigned long size)
 		}
 
 		if (p == freep)
-			if ((p = mm_sbrk(alloc_sz)) == NULL)
+			if ((p = mm(alloc_sz, mm_mmap)) == NULL)
 				return NULL;
 	}
 
@@ -135,15 +139,17 @@ void mfree_arbitrary(void *ptr, unsigned long size)
 	mfree((void *)(hp + 1));
 }
 
-static Header *mm_sbrk(unsigned long size)
+static Header *mm(unsigned long size, void *(*allocator)(unsigned long size))
 {
 	if (size < BLOCKSIZ)
 		size = BLOCKSIZ;
 
 	Header *p = NULL;
-	char *ptr = NULL;
+	void *ptr = NULL;
 
-	if ((ptr = sbrk(size * sizeof(Header))) == (char *)(-1))
+	ptr = allocator(size * sizeof(Header));
+
+	if (ptr == NULL)
 		return NULL;
 
 	p = (Header *)ptr;
@@ -151,6 +157,25 @@ static Header *mm_sbrk(unsigned long size)
 
 	mfree((void *)(p + 1));
 	return freep;
+}
+
+static void *mm_mmap(unsigned long size)
+{
+	void *p = NULL;
+
+#ifdef __APPLE__
+	p = mmap(0, size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANON, -1, 0);
+#else
+	p = mmap(0, size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+#endif // ifdef __APPLE__
+
+	return (p == MAP_FAILED) ? NULL : p;
+}
+
+static void *mm_sbrk(unsigned long size)
+{
+	void *p = NULL;
+	return ((p = sbrk(size)) == (void *)(-1)) ? NULL : p;
 }
 
 static void ensure_init_freelist(void)
