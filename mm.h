@@ -10,7 +10,7 @@ union header {
 
 typedef union header Header;
 
-#define BLOCKSIZ 1024
+#define BLOCKSIZ 4096
 
 void *mmalloc(unsigned long size);
 void *mcalloc(unsigned long count, unsigned long size);
