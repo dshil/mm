@@ -13,7 +13,7 @@ Header *freep = NULL;
 static void ensure_init_freelist(void);
 static inline unsigned long num_of_blocks(unsigned long size);
 
-static Header *mm(unsigned long size, void *(*allocator)(unsigned long size));
+static Header *mm(unsigned long size);
 static void *mm_sbrk(unsigned long size);
 static void *mm_mmap(unsigned long size);
 
@@ -41,7 +41,7 @@ void *mmalloc(const unsigned long size)
 		}
 
 		if (p == freep)
-			if ((p = mm(alloc_sz, mm_mmap)) == NULL)
+			if ((p = mm(alloc_sz)) == NULL)
 				return NULL;
 	}
 
@@ -139,7 +139,7 @@ void mfree_arbitrary(void *ptr, unsigned long size)
 	mfree((void *)(hp + 1));
 }
 
-static Header *mm(unsigned long size, void *(*allocator)(unsigned long size))
+static Header *mm(unsigned long size)
 {
 	if (size < BLOCKSIZ)
 		size = BLOCKSIZ;
@@ -147,7 +147,10 @@ static Header *mm(unsigned long size, void *(*allocator)(unsigned long size))
 	Header *p = NULL;
 	void *ptr = NULL;
 
-	ptr = allocator(size * sizeof(Header));
+	if (size >= MMAP_THRESHOLD)
+		ptr = mm_mmap(size * sizeof(Header));
+	else
+		ptr = mm_sbrk(size * sizeof(Header));
 
 	if (ptr == NULL)
 		return NULL;
