@@ -20,6 +20,14 @@ int main()
 		mfree(ptr);
 	}
 	{
+		long *ptr = (long *)mmalloc(BUFSIZ * 128 * sizeof(long));
+
+		*ptr = 100;
+		assert(*ptr == 100);
+
+		mfree(ptr);
+	}
+	{
 		mfree(NULL);
 	}
 	{
