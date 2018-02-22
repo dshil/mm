@@ -65,6 +65,14 @@ void *mmalloc(const unsigned long size)
 	return NULL;
 }
 
+/*
+ * mcalloc allocates enough space for @count objects. Returned memory area will
+ * be zeroed.
+ *
+ * Due to perfomance reason no need to memset(3) just allocated memory because
+ * if the user akses a big chunk of memory we know that it'll be fetched from
+ * the kernel and kernel will empty this area for us due to security reason.
+ */
 void *mcalloc(unsigned long count, unsigned long size)
 {
 	unsigned long num = count * size;
@@ -72,6 +80,13 @@ void *mcalloc(unsigned long count, unsigned long size)
 
 	if (!(ptr = mmalloc(num)))
 		return NULL;
+
+	Header *bp = (Header *)ptr - 1;
+	if (!bp)
+		return NULL;
+
+	if (bp->h.size >= BLOCKSIZ)
+		return ptr;
 
 	memset(ptr, 0, num);
 	return ptr;
