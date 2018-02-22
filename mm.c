@@ -58,7 +58,7 @@ void *mmalloc(const unsigned long size)
 		}
 
 		if (p == freep)
-			if ((p = mm(alloc_sz)) == NULL)
+			if (!(p = mm(alloc_sz)))
 				return NULL;
 	}
 
@@ -70,7 +70,7 @@ void *mcalloc(unsigned long count, unsigned long size)
 	unsigned long num = count * size;
 	char *ptr = NULL;
 
-	if ((ptr = mmalloc(num)) == NULL)
+	if (!(ptr = mmalloc(num)))
 		return NULL;
 
 	memset(ptr, 0, num);
@@ -81,11 +81,11 @@ void *mcalloc(unsigned long count, unsigned long size)
  */
 void *mrealloc(void *ptr, unsigned long size)
 {
-	if (ptr == NULL)
+	if (!ptr)
 		return mmalloc(size);
 
 	Header *bp = (Header*)ptr - 1;
-	if (bp == NULL)
+	if (!bp)
 		return NULL;
 
 	const unsigned long alloc_sz = num_of_blocks(size);
@@ -105,7 +105,7 @@ void *mrealloc(void *ptr, unsigned long size)
 	}
 
 	void *p = mmalloc(alloc_sz);
-	if (p == NULL)
+	if (!p)
 		return NULL;
 
 	memcpy(p, ptr, (bp->h.size - 1) * sizeof(Header));
@@ -120,11 +120,11 @@ void *mrealloc(void *ptr, unsigned long size)
  */
 void mfree(void *ptr)
 {
-	if (ptr == NULL)
+	if (!ptr)
 		return;
 
 	Header *bp = (Header *)ptr - 1;
-	if (bp == NULL)
+	if (!bp)
 		return;
 
 	ensure_init_freelist();
@@ -154,7 +154,7 @@ void mfree(void *ptr)
  */
 void mfree_arbitrary(void *ptr, unsigned long size)
 {
-	if (ptr == NULL || size == 0 || size < sizeof(Header))
+	if (!ptr || size == 0 || size < sizeof(Header))
 		return;
 
 	Header *hp = (Header *)ptr;
@@ -175,7 +175,7 @@ static Header *mm(unsigned long size)
 	else
 		ptr = mm_sbrk(size * sizeof(Header));
 
-	if (ptr == NULL)
+	if (!ptr)
 		return NULL;
 
 	p = (Header *)ptr;
@@ -206,7 +206,7 @@ static void *mm_sbrk(unsigned long size)
 
 static void ensure_init_freelist(void)
 {
-	if (freep == NULL) {
+	if (!freep) {
 		base.h.size = 0;
 		base.h.ptr = &base;
 		freep = base.h.ptr;
