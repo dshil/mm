@@ -17,6 +17,23 @@ static Header *mm(unsigned long size);
 static void *mm_sbrk(unsigned long size);
 static void *mm_mmap(unsigned long size);
 
+/*
+ * mmaloc doesn't guarantee for returned memory area to be zeroed. It's
+ * possible that returned area will be zeroed because it might be the first
+ * call and we just acquired a big chunk of memory from the kernel. Kernel
+ * empties returned memory area for security reason. If it won't do it the
+ * process isolation idiom can be broken (some process will receive a
+ * previously used memory region by another process).
+ *
+ * Bad usage:
+ *   char *p = (char *)mmaloc(sizeof(long) * 256);
+ *   // Do some stuff with @p;
+ *   free(p);
+ *
+ *   char *cp = (char *)mmaloc(sizeof(int) * BUFSIZ);
+ *   // Do some stuff with @cp
+ *   // @cp can contain some unexpected previously used data.
+ */
 void *mmalloc(const unsigned long size)
 {
 	ensure_init_freelist();
@@ -59,7 +76,9 @@ void *mcalloc(unsigned long count, unsigned long size)
 	memset(ptr, 0, num);
 	return ptr;
 }
-
+/*
+ * mrealloc allows to grow and shrink the memory area pointed by @ptr
+ */
 void *mrealloc(void *ptr, unsigned long size)
 {
 	if (ptr == NULL)
@@ -95,6 +114,10 @@ void *mrealloc(void *ptr, unsigned long size)
 	return p;
 }
 
+/*
+ * mfree puts a memory area pointed by @ptr to a list of free blocks.
+ * Neighbors blocks will be merged.
+ */
 void mfree(void *ptr)
 {
 	if (ptr == NULL)
@@ -126,6 +149,9 @@ void mfree(void *ptr)
 	freep = p;
 }
 
+/*
+ * mfree_arbitrary puts a memory area in a list of free blocks.
+ */
 void mfree_arbitrary(void *ptr, unsigned long size)
 {
 	if (ptr == NULL || size == 0 || size < sizeof(Header))
