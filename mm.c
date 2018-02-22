@@ -7,8 +7,8 @@
 
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 
-Header base;
-Header *freep = NULL;
+static Header base;
+static Header *freep = NULL;
 
 static void ensure_init_freelist(void);
 static inline unsigned long num_of_blocks(unsigned long size);
