@@ -52,14 +52,11 @@ void *mcalloc(unsigned long count, unsigned long size)
 {
 	unsigned long num = count * size;
 	char *ptr = NULL;
-	char *p = NULL;
 
-	if ((p = ptr = mmalloc(num)) == NULL)
+	if ((ptr = mmalloc(num)) == NULL)
 		return NULL;
 
-	for (unsigned long i = 0; i < num; i++)
-		*p++ = 0;
-
+	memset(ptr, 0, num);
 	return ptr;
 }
 
