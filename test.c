@@ -39,6 +39,14 @@ int main()
 		mfree(ptr);
 	}
 	{
+		int *ptr = (int *)mcalloc(BUFSIZ * BUFSIZ, sizeof(int));
+
+		assert(ptr != NULL);
+		assert(*ptr == 0);
+
+		mfree(ptr);
+	}
+	{
 		char pool[BUFSIZ];
 		char *ptr = pool;
 		mfree_arbitrary((void *)ptr, BUFSIZ);
