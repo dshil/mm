@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdint.h>
 #include <sys/mman.h>
 
 #include "mm.h"
@@ -11,11 +12,14 @@ static Header base;
 static Header *freep = NULL;
 
 static void ensure_init_freelist(void);
-static inline unsigned long num_of_blocks(unsigned long size);
+static inline size_t num_of_blocks(size_t size);
+static size_t safe_mul(size_t count, size_t size);
+static size_t mul(size_t count, size_t size);
+static size_t fast_mul(size_t count, size_t size);
 
-static Header *mm(unsigned long size);
-static void *mm_sbrk(unsigned long size);
-static void *mm_mmap(unsigned long size);
+static Header *mm(size_t size);
+static void *mm_sbrk(size_t size);
+static void *mm_mmap(size_t size);
 
 /*
  * mmaloc doesn't guarantee for returned memory area to be zeroed. It's
@@ -34,11 +38,11 @@ static void *mm_mmap(unsigned long size);
  *   // Do some stuff with @cp
  *   // @cp can contain some unexpected previously used data.
  */
-void *mmalloc(const unsigned long size)
+void *mmalloc(const size_t size)
 {
 	ensure_init_freelist();
 
-	const unsigned long alloc_sz = num_of_blocks(size);
+	const size_t alloc_sz = num_of_blocks(size);
 
 	Header *prevp = freep;
 	Header *p = NULL;
@@ -71,11 +75,11 @@ void *mmalloc(const unsigned long size)
  *
  * Due to perfomance reason no need to memset(3) just allocated memory because
  * if the user akses a big chunk of memory we know that it'll be fetched from
- * the kernel and kernel will empty this area for us due to security reason.
+ * the kernel and it will empty this area for us due to security reason.
  */
-void *mcalloc(unsigned long count, unsigned long size)
+void *mcalloc(size_t count, size_t size)
 {
-	unsigned long num = count * size;
+	size_t num = safe_mul(count, size);
 	char *ptr = NULL;
 
 	if (!(ptr = mmalloc(num)))
@@ -94,7 +98,7 @@ void *mcalloc(unsigned long count, unsigned long size)
 /*
  * mrealloc allows to grow and shrink the memory area pointed by @ptr
  */
-void *mrealloc(void *ptr, unsigned long size)
+void *mrealloc(void *ptr, size_t size)
 {
 	if (!ptr)
 		return mmalloc(size);
@@ -103,7 +107,7 @@ void *mrealloc(void *ptr, unsigned long size)
 	if (!bp)
 		return NULL;
 
-	const unsigned long alloc_sz = num_of_blocks(size);
+	const size_t alloc_sz = num_of_blocks(size);
 
 	if (bp->h.size >= alloc_sz) {
 		if (bp->h.size == alloc_sz)
@@ -167,7 +171,7 @@ void mfree(void *ptr)
 /*
  * mfree_arbitrary puts a memory area in a list of free blocks.
  */
-void mfree_arbitrary(void *ptr, unsigned long size)
+void mfree_arbitrary(void *ptr, size_t size)
 {
 	if (!ptr || size == 0 || size < sizeof(Header))
 		return;
@@ -177,7 +181,7 @@ void mfree_arbitrary(void *ptr, unsigned long size)
 	mfree((void *)(hp + 1));
 }
 
-static Header *mm(unsigned long size)
+static Header *mm(size_t size)
 {
 	if (size < BLOCKSIZ)
 		size = BLOCKSIZ;
@@ -200,7 +204,7 @@ static Header *mm(unsigned long size)
 	return freep;
 }
 
-static void *mm_mmap(unsigned long size)
+static void *mm_mmap(size_t size)
 {
 	void *p = NULL;
 
@@ -213,7 +217,7 @@ static void *mm_mmap(unsigned long size)
 	return (p == MAP_FAILED) ? NULL : p;
 }
 
-static void *mm_sbrk(unsigned long size)
+static void *mm_sbrk(size_t size)
 {
 	void *p = NULL;
 	return ((p = sbrk(size)) == (void *)(-1)) ? NULL : p;
@@ -228,7 +232,66 @@ static void ensure_init_freelist(void)
 	}
 }
 
-static inline unsigned long num_of_blocks(unsigned long size)
+/*
+ * num_of_blocks transforms the size into number of blocks in the free list.
+ * overflow-safe.
+ */
+static inline size_t num_of_blocks(size_t size)
 {
-	return (size + sizeof(Header) - 1) / sizeof(Header) + 1;
+	size_t num = size + sizeof(Header);
+	return (num <= size || num <= sizeof(Header)) ?
+		SIZE_MAX : num - 1 / sizeof(Header) + 1;
+}
+
+static size_t safe_mul(size_t count, size_t size)
+{
+	size_t ret = 0;
+
+#ifdef __SIZEOF_INT128__
+	ret = fast_mul(count, size);
+#else
+	ret = mul(count, size);
+#endif // ifdef __SIZEOF_INT128__
+
+	return ret;
+}
+
+static size_t mul(size_t count, size_t size)
+{
+	unsigned count_high = count >> BITS_PER_HALF_WORD;
+	unsigned count_low = count;
+
+	unsigned size_high = size >> BITS_PER_HALF_WORD;
+	unsigned size_low = size;
+
+	if (!count_high && !size_high)
+		return count * size;
+
+	if (count_high && size_high)
+		return SIZE_MAX;
+
+	size_t t1 = 0;
+	size_t t2 = 0;
+
+	if (count_high) {
+		t1 = (size_t)count_high * size_low;
+		t2 = (size_t)count_low * size_low;
+	} else {
+		t1 = (size_t)size_high * count_low;
+		t2 = (size_t)size_low * count_low;
+	}
+
+	if ((t1 + (t2 >> BITS_PER_HALF_WORD)) >= UINT32_MAX)
+		return SIZE_MAX;
+
+	return (t1 << BITS_PER_HALF_WORD) + t2;
+}
+
+static size_t fast_mul(size_t count, size_t size)
+{
+	__uint128_t c = count;
+	__uint128_t s = size;
+	__uint128_t ret = c * s;
+
+	return ret >> BITS_PER_LONG ? SIZE_MAX : ret;
 }
