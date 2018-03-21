@@ -207,6 +207,18 @@ void *mrealloc(void *ptr, size_t size)
 	return p;
 }
 
+void mfree_bytes(void *ptr, size_t size)
+{
+	if (!bufp || !metap || !ptr || (ptr < bufp))
+		return;
+
+	unsigned level = get_level(size);
+	if (level > BUDDY_MAX_LEVEL)
+		return;
+
+	free_block(ptr, BUDDY_MAX_LEVEL - level);
+}
+
 static void free_block(void *block, unsigned level)
 {
 	const size_t size = sizeof_block(level);
