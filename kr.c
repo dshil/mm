@@ -63,6 +63,9 @@ void *mmalloc(const size_t size)
 void *mcalloc(size_t count, size_t size)
 {
 	size_t num = safe_mul(count, size);
+	if (num == SIZE_MAX)
+		return NULL;
+
 	char *ptr = NULL;
 
 	const char first_alloc = (freep == NULL);
