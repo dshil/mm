@@ -1,10 +1,9 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <assert.h>
 
-#include "kr.h"
+#include "mm.h"
 
-int main()
+void test_main(void)
 {
 	{
 		int *ptr = (int *)mmalloc(sizeof(int)*10);
@@ -45,16 +44,6 @@ int main()
 		assert(*ptr == 0);
 
 		mfree(ptr);
-	}
-	{
-		char pool[BUFSIZ];
-		char *ptr = pool;
-		mfree_arbitrary((void *)ptr, BUFSIZ);
-
-		int *p = (int *)mmalloc(10 * sizeof(int));
-		assert(p != NULL);
-		*p = 1000;
-		assert(*p == 1000);
 	}
 	{
 		int *ptr = (int *)mrealloc(NULL, 10 * sizeof(int));
