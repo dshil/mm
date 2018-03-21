@@ -154,7 +154,7 @@ void *mmalloc(size_t size)
 
 void mfree(void *ptr)
 {
-	if (!bufp || !metap || !ptr || (ptr < bufp || ptr > bufp))
+	if (!bufp || !metap || !ptr || (ptr < bufp))
 		return;
 	free_block(ptr, find_block_level(ptr));
 }
@@ -192,16 +192,16 @@ void *mrealloc(void *ptr, size_t size)
 
 	const size_t realloc_sz = sizeof_block(realloc_level);
 	const unsigned block_level = find_block_level(ptr);
-	const size_t block_size = sizeof_block(block_level);
+	const size_t block_sz = sizeof_block(block_level);
 
-	if (realloc_sz == block_size)
+	if (realloc_sz == block_sz)
 		return ptr;
 
 	void *p = mmalloc(size);
 	if (!p)
 		return NULL;
 
-	memcpy(p, ptr, block_size);
+	memcpy(p, ptr, block_sz);
 	mfree(ptr);
 
 	return p;
@@ -219,11 +219,9 @@ static void free_block(void *block, unsigned level)
 		return;
 	}
 
-	remove_block(block, level);
 	remove_block(buddy, level);
 
 	void *fb = (block > buddy) ? buddy : block;
-	push_block_front(fb, level - 1);
 	free_block(fb, level - 1);
 }
 

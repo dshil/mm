@@ -48,6 +48,7 @@ void test_main(void)
 	{
 		int *ptr = (int *)mrealloc(NULL, 10 * sizeof(int));
 		assert(ptr != NULL);
+		mfree(ptr);
 	}
 	{
 		int *ptr = (int *)mmalloc(sizeof(int));
