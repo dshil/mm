@@ -1,3 +1,6 @@
+/*
+ * Element of the implicit linked list of free blocks.
+ */
 typedef struct _buddy_node {
     struct _buddy_node *prev;
     struct _buddy_node *next;
