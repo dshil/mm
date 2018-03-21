@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include "mm.h"
+#include "kr.h"
 
 int main()
 {
