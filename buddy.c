@@ -7,7 +7,28 @@
 #include "buddy.h"
 #include "utils.h"
 
+/*
+ * Returns a free block for the provided level. If there is no required block
+ * on the corresponding level it takes a block from the upper level, splits it
+ * into two parts, puts one into the free list and returns another to the
+ * caller. If there is no block even for level 0 NULL should be returned
+ * signalizing that we've run out of memory.
+ *
+ * Free blocks are stored in an implicit linked list on each level. Pointers to
+ * next and prev element of the list are stored directly in the free blocks.
+ * It allows free lists consumes zero extra memory. When the block is extracted
+ * from the free list the meta data stored in it will be cleared and the free
+ * list pointers will be updated.
+ */
 static void *alloc_block(unsigned level);
+
+/*
+ * Free block on the provided level.
+ *
+ * If the buddy of the provided block is also free we'll remove the buddy from
+ * the freelist on the corresponding level, merge it with the freed block and
+ * put the merged block in the freelist of the upper level.
+ */
 static void free_block(void *block, unsigned level);
 
 static inline size_t total_size(void);
@@ -19,12 +40,85 @@ static void *pop_block_front(unsigned level);
 static void push_block_front(const void *bp, unsigned level);
 static void remove_block(const void *bp, unsigned level);
 
+/*
+ * returns the total size of meta data.
+ *
+ * To calculate the meta size explore an example with BUDDY_MAX_LEVEL = 2.
+ *
+ * +-----------------------+-----------+
+ * |           0           |  64 bytes |
+ * +-----------------------+-----------+
+ * |     1     |     2     |  32 bytes |
+ * +-----------+-----------+-----------+
+ * |  3  |  4  |  5  |  6  |  16 bytes |
+ * +-----+-----+-----+-----+-----------+
+ *
+ * Number of blocks = 7. The total size = 4 * 16 = 64 bytes.
+ *
+ * 3 bits is required to determine the block level. The level of the blocks of
+ * the last level won't be stored because we assume that if the block doesn't
+ * belong to any levels, it belongs to the last one.
+ *
+ * 3 bits is required to determine if the pair of blocks is free or not. Block
+ * on the first level doesn't have a buddy.
+ *
+ * As a result 6 bits are required for meta data. It'll rounded to 8 bits.
+ * We are thinking in terms of bytes and 8 bits will be transformed to 1 byte.
+ *
+ * The last step is to calculate the number of leafs, the smallest block of the
+ * allocator.
+ *
+ * The leaf size is determined by the Header. It should be at least 16 bytes to
+ * be able to store 2 pointers of free list but keep in mind that this structure
+ * is implementation dependent.
+ *
+ * Returned bytes number will be at least sizeof(Header) because for allocator
+ * with the small number of levels we'll need less than a byte to store all
+ * the meta data. Returned value can be treated as: first half of bytes is used
+ * for level index, the second half - for the merge index.
+ */
 static size_t sizeof_meta(void);
+
+/*
+ * In-memory index initialization routine. The whole index is split into 2
+ * separate index:
+ *  - Level index: used for checking if the level contains this block.
+ *  - Merge index: used for checking if the pair of blocks is free or not.
+ *
+ * The level bit is stored for all blocks except the last one. If the block
+ * belongs to the level the corresponding bit is set to 1. As a result the total
+ * size of the level index equals to 1 << BUDDY_MAX_LEVEL.
+ *
+ * The merge bit is used for each pair of blocks. If one of the block of the
+ * pair was freed or allocated the corresponding bits is XORed. As a result the
+ * total size of the merge index equals to 1 << BUDDY_MAX_LEVEL.
+ *
+ * For example, if BUDDY_MAX_LEVEL = 2, then the total number of blocks equals
+ * to 1 << (BUDDY_MAX_LEVEL + 1) = 7 blocks.
+ * Bits required for level index: 1 << BUDDY_MAX_LEVEL = 4 bits.
+ * Bits required for the merge index: 1 << BUDDY_MAX_LEVEL = 4 bits.
+ * The total size: 8 bits or 1 byte.
+ * The total overhead of memory consumption for each block: ~ 1 bit.
+ *
+ * Meta data is stored right before the free memory.
+ */
 static void *ensure_meta_init(void);
+
 static inline char *get_level_index(void);
 static inline char *get_merge_index(void);
 
+/*
+ * Returns the level of the @block.
+ * In worst case we need at least (BUDDY_MAX_LEVEL - 1) iteration to determine
+ * the block level.
+ *
+ * As well known when the user allocates the block via malloc(2) he actually
+ * knows the size of allocated memory and can provide this size to the free(2).
+ * It this user so kind the usage of this routine can be reduced
+ * because we can directly determine the level from the block size.
+ */
 static unsigned find_block_level(const void *block);
+
 static void set_block_level(const void *block, unsigned level);
 static int check_block_level(const void *block, unsigned level);
 static int toggle_allocated_block(const void *block, unsigned level);
@@ -94,13 +188,6 @@ void *mrealloc(void *ptr, size_t size)
 	return mmalloc(size);
 }
 
-/*
- * Free block on the provided level.
- *
- * If the buddy of the provided block is also free we'll remove the buddy from
- * the freelist on the corresponding level, merge it with the freed block and
- * put the merged block in the freelist of the upper level.
- */
 static void free_block(void *block, unsigned level)
 {
 	const size_t size = sizeof_block(level);
@@ -121,19 +208,6 @@ static void free_block(void *block, unsigned level)
 	free_block(fb, level - 1);
 }
 
-/*
- * Returns a free block for the provided level. If there is no required block
- * on the corresponding level it takes a block from the upper level, splits it
- * into two parts, puts one into the free list and returns another to the
- * caller. If there is no block even for level 0 NULL should be returned
- * signalizing that we've run out of memory.
- *
- * Free blocks are stored in an implicit linked list on each level. Pointers to
- * next and prev element of the list are stored directly in the free blocks.
- * It allows free lists consumes zero extra memory. When the block is extracted
- * from the free list the meta data stored in it will be cleared and the free
- * list pointers will be updated.
- */
 static void *alloc_block(unsigned level)
 {
 	void *bp = freelists[level];
@@ -224,43 +298,6 @@ static inline size_t sizeof_block(unsigned level)
 	return total_size() / max_blocks_on_level(level);
 }
 
-/*
- * returns the total size of meta data.
- *
- * To calculate the meta size explore an example with BUDDY_MAX_LEVEL = 2.
- *
- * +-----------------------+-----------+
- * |           0           |  64 bytes |
- * +-----------------------+-----------+
- * |     1     |     2     |  32 bytes |
- * +-----------+-----------+-----------+
- * |  3  |  4  |  5  |  6  |  16 bytes |
- * +-----+-----+-----+-----+-----------+
- *
- * Number of blocks = 7. The total size = 4 * 16 = 64 bytes.
- *
- * 3 bits is required to determine the block level. The level of the blocks of
- * the last level won't be stored because we assume that if the block doesn't
- * belong to any levels, it belongs to the last one.
- *
- * 3 bits is required to determine if the pair of blocks is free or not. Block
- * on the first level doesn't have a buddy.
- *
- * As a result 6 bits are required for meta data. It'll rounded to 8 bits.
- * We are thinking in terms of bytes and 8 bits will be transformed to 1 byte.
- *
- * The last step is to calculate the number of leafs, the smallest block of the
- * allocator.
- *
- * The leaf size is determined by the Header. It should be at least 16 bytes to
- * be able to store 2 pointers of free list but keep in mind that this structure
- * is implementation dependent.
- *
- * Returned bytes number will be at least sizeof(Header) because for allocator
- * with the small number of levels we'll need less than a byte to store all
- * the meta data. Returned value can be treated as: first half of bytes is used
- * for level index, the second half - for the merge index.
- */
 static size_t sizeof_meta(void)
 {
 	const size_t num_blocks = 1UL << (1 + BUDDY_MAX_LEVEL);
@@ -289,29 +326,6 @@ static inline size_t max_blocks_on_level(unsigned level)
 	return (1UL << level);
 }
 
-/*
- * In-memory index initialization routine. The whole index is split into 2
- * separate index:
- *  - Level index: used for checking if the level contains this block.
- *  - Merge index: used for checking if the pair of blocks is free or not.
- *
- * The level bit is stored for all blocks except the last one. If the block
- * belongs to the level the corresponding bit is set to 1. As a result the total
- * size of the level index equals to 1 << BUDDY_MAX_LEVEL.
- *
- * The merge bit is used for each pair of blocks. If one of the block of the
- * pair was freed or allocated the corresponding bits is XORed. As a result the
- * total size of the merge index equals to 1 << BUDDY_MAX_LEVEL.
- *
- * For example, if BUDDY_MAX_LEVEL = 2, then the total number of blocks equals
- * to 1 << (BUDDY_MAX_LEVEL + 1) = 7 blocks.
- * Bits required for level index: 1 << BUDDY_MAX_LEVEL = 4 bits.
- * Bits required for the merge index: 1 << BUDDY_MAX_LEVEL = 4 bits.
- * The total size: 8 bits or 1 byte.
- * The total overhead of memory consumption for each block: ~ 1 bit.
- *
- * Meta data is stored right before the free memory.
- */
 static void *ensure_meta_init(void)
 {
 	if (metap)
@@ -327,16 +341,6 @@ static void *ensure_meta_init(void)
 	return metap;
 }
 
-/*
- * Returns the level of the @block.
- * In worst case we need at least (BUDDY_MAX_LEVEL - 1) iteration to determine
- * the block level.
- *
- * As well known when the user allocates the block via malloc(2) he actually
- * knows the size of allocated memory and can provide this size to the free(2).
- * It this user so kind the usage of this routine can be reduced
- * because we can directly determine the level from the block size.
- */
 static unsigned find_block_level(const void *block)
 {
 	for (int i = BUDDY_MAX_LEVEL - 1; i > 0; i--)
