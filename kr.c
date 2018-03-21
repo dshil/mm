@@ -13,14 +13,6 @@ static void ensure_init_freelist(void);
 static inline size_t num_of_blocks(size_t size);
 static Header *mm(size_t size);
 
-/*
- * mmalloc doesn't guarantee for returned memory area to be zeroed. It's
- * possible that returned area will be zeroed because it might be the first
- * call and we just acquired a big chunk of memory from the Kernel. The Kernel
- * empties the returned memory area for a security reason. If it won't do it the
- * process isolation idiom can be broken (some process will receive a
- * previously used memory region by another process).
- */
 void *mmalloc(const size_t size)
 {
 	ensure_init_freelist();
@@ -52,14 +44,6 @@ void *mmalloc(const size_t size)
 	return NULL;
 }
 
-/*
- * mcalloc allocates enough space for @count objects. Returned memory area will
- * be zeroed.
- *
- * Due to perfomance reason no need to memset(3) just allocated memory because
- * if the user akses a big chunk of memory we know that it'll be fetched from
- * the Kernel and it will empty this area for us due to security reason.
- */
 void *mcalloc(size_t count, size_t size)
 {
 	size_t num = safe_mul(count, size);
@@ -83,9 +67,7 @@ void *mcalloc(size_t count, size_t size)
 	memset(ptr, 0, num);
 	return ptr;
 }
-/*
- * mrealloc allows to grow and shrink the memory area pointed by @ptr.
- */
+
 void *mrealloc(void *ptr, size_t size)
 {
 	if (!ptr)
@@ -121,10 +103,6 @@ void *mrealloc(void *ptr, size_t size)
 	return p;
 }
 
-/*
- * mfree puts a memory area pointed by @ptr to a list of free blocks.
- * Neighbors blocks will be merged.
- */
 void mfree(void *ptr)
 {
 	if (!ptr)
