@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "kr.h"
+#include "mm.h"
 #include "utils.h"
 
 static Header base;
