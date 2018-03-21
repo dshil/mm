@@ -22,21 +22,12 @@ static void *mm_sbrk(size_t size);
 static void *mm_mmap(size_t size);
 
 /*
- * mmaloc doesn't guarantee for returned memory area to be zeroed. It's
+ * mmalloc doesn't guarantee for returned memory area to be zeroed. It's
  * possible that returned area will be zeroed because it might be the first
- * call and we just acquired a big chunk of memory from the kernel. Kernel
- * empties returned memory area for security reason. If it won't do it the
+ * call and we just acquired a big chunk of memory from the Kernel. The Kernel
+ * empties the returned memory area for a security reason. If it won't do it the
  * process isolation idiom can be broken (some process will receive a
  * previously used memory region by another process).
- *
- * Bad usage:
- *   char *p = (char *)mmaloc(sizeof(long) * 256);
- *   // Do some stuff with @p;
- *   free(p);
- *
- *   char *cp = (char *)mmaloc(sizeof(int) * BUFSIZ);
- *   // Do some stuff with @cp
- *   // @cp can contain some unexpected previously used data.
  */
 void *mmalloc(const size_t size)
 {
@@ -75,12 +66,14 @@ void *mmalloc(const size_t size)
  *
  * Due to perfomance reason no need to memset(3) just allocated memory because
  * if the user akses a big chunk of memory we know that it'll be fetched from
- * the kernel and it will empty this area for us due to security reason.
+ * the Kernel and it will empty this area for us due to security reason.
  */
 void *mcalloc(size_t count, size_t size)
 {
 	size_t num = safe_mul(count, size);
 	char *ptr = NULL;
+
+	const char first_alloc = (freep == NULL);
 
 	if (!(ptr = mmalloc(num)))
 		return NULL;
@@ -89,14 +82,14 @@ void *mcalloc(size_t count, size_t size)
 	if (!bp)
 		return NULL;
 
-	if (bp->h.size >= BLOCKSIZ)
+	if (bp->h.size >= BLOCKSIZ && !first_alloc)
 		return ptr;
 
 	memset(ptr, 0, num);
 	return ptr;
 }
 /*
- * mrealloc allows to grow and shrink the memory area pointed by @ptr
+ * mrealloc allows to grow and shrink the memory area pointed by @ptr.
  */
 void *mrealloc(void *ptr, size_t size)
 {
@@ -233,7 +226,7 @@ static void ensure_init_freelist(void)
 }
 
 /*
- * num_of_blocks transforms the size into number of blocks in the free list.
+ * num_of_blocks transforms @size bytes into number of blocks in the free list.
  * overflow-safe.
  */
 static inline size_t num_of_blocks(size_t size)
