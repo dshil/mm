@@ -56,7 +56,7 @@ void test_main(void)
 		ptr = (int *)mrealloc(ptr, 200 * sizeof(int));
 		*(ptr + 1) = 200;
 
-		assert(*ptr == 100);
+		assert(*ptr == 0);
 		assert(*(ptr + 1) == 200);
 
 		mfree(ptr);

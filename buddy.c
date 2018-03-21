@@ -1,9 +1,9 @@
 #include <math.h>
 #include <stdio.h>
-#include <unistd.h>
+#include <stdint.h>
 #include <string.h>
-#include <sys/mman.h>
 
+#include "mm.h"
 #include "buddy.h"
 #include "utils.h"
 
@@ -63,6 +63,35 @@ void mfree(void *ptr)
 	if (!bufp || !metap || !ptr || (ptr < bufp || ptr > bufp))
 		return;
 	free_block(ptr, find_block_level(ptr));
+}
+
+void *mcalloc(size_t count, size_t size)
+{
+	const size_t num = safe_mul(count, size);
+	if (num == SIZE_MAX)
+		return NULL;
+
+	const char first_alloc = (bufp == NULL);
+	void *ptr = NULL;
+
+	if (!(ptr = mmalloc(num)))
+		return NULL;
+
+	if (first_alloc)
+		return ptr;
+
+	memset(ptr, 0, num);
+
+	return ptr;
+}
+
+void *mrealloc(void *ptr, size_t size)
+{
+	if (!ptr)
+		return mmalloc(size);
+
+	mfree(ptr);
+	return mmalloc(size);
 }
 
 /*
