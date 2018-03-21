@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <sys/mman.h>
 
-#include "mm.h"
+#include "kr.h"
 
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 
