@@ -5,6 +5,9 @@
 
 #include "utils.h"
 
+static size_t mul(size_t count, size_t size);
+static size_t fast_mul(size_t count, size_t size);
+
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 
 void *mm_mmap(size_t size)
@@ -39,7 +42,7 @@ size_t safe_mul(size_t count, size_t size)
 	return ret;
 }
 
-size_t mul(size_t count, size_t size)
+static size_t mul(size_t count, size_t size)
 {
 	unsigned count_high = count >> BITS_PER_HALF_WORD;
 	unsigned count_low = count;
@@ -70,7 +73,7 @@ size_t mul(size_t count, size_t size)
 	return (t1 << BITS_PER_HALF_WORD) + t2;
 }
 
-size_t fast_mul(size_t count, size_t size)
+static size_t fast_mul(size_t count, size_t size)
 {
 	__uint128_t c = count;
 	__uint128_t s = size;
