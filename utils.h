@@ -6,8 +6,20 @@
 #define BITS_PER_HALF_WORD (__WORDSIZE / 2)
 
 void *mm_sbrk(size_t size);
+
+/*
+ * Returns @size bytes allocated by portable version of mmap(2).
+ *
+ * Supported Platforms:
+ *  - Linux
+ *  - OS X Yosimite 10.10.5 and later
+ */
 void *mm_mmap(size_t size);
 
+/*
+ * Returns the result of multiplication @count and @size. SIZE_MAX will be
+ * returned in case of overflow.
+ */
 size_t safe_mul(size_t count, size_t size);
 
 unsigned next_pow_of_2(size_t size);
