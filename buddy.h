@@ -15,3 +15,9 @@ typedef struct block_meta {
 } block_meta;
 
 #define BUDDY_MAX_LEVEL 32
+
+/*
+ * Frees block the same as mfree does but makes it faster because we don't spend
+ * time finding level of the freed block.
+ */
+void mfree_bytes(void *ptr, size_t size);
