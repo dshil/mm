@@ -1,25 +1,16 @@
 #include <stdio.h>
-#include <unistd.h>
-#include <string.h>
 #include <stdint.h>
-#include <sys/mman.h>
+#include <string.h>
 
 #include "kr.h"
-
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#include "utils.h"
 
 static Header base;
 static Header *freep = NULL;
 
 static void ensure_init_freelist(void);
 static inline size_t num_of_blocks(size_t size);
-static size_t safe_mul(size_t count, size_t size);
-static size_t mul(size_t count, size_t size);
-static size_t fast_mul(size_t count, size_t size);
-
 static Header *mm(size_t size);
-static void *mm_sbrk(size_t size);
-static void *mm_mmap(size_t size);
 
 /*
  * mmalloc doesn't guarantee for returned memory area to be zeroed. It's
@@ -197,25 +188,6 @@ static Header *mm(size_t size)
 	return freep;
 }
 
-static void *mm_mmap(size_t size)
-{
-	void *p = NULL;
-
-#ifdef __APPLE__
-	p = mmap(0, size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANON, -1, 0);
-#else
-	p = mmap(0, size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
-#endif // ifdef __APPLE__
-
-	return (p == MAP_FAILED) ? NULL : p;
-}
-
-static void *mm_sbrk(size_t size)
-{
-	void *p = NULL;
-	return ((p = sbrk(size)) == (void *)(-1)) ? NULL : p;
-}
-
 static void ensure_init_freelist(void)
 {
 	if (!freep) {
@@ -234,57 +206,4 @@ static inline size_t num_of_blocks(size_t size)
 	size_t num = size + sizeof(Header);
 	return (num <= size || num <= sizeof(Header)) ?
 		SIZE_MAX : num - 1 / sizeof(Header) + 1;
-}
-
-static size_t safe_mul(size_t count, size_t size)
-{
-	size_t ret = 0;
-
-#ifdef __SIZEOF_INT128__
-	ret = fast_mul(count, size);
-#else
-	ret = mul(count, size);
-#endif // ifdef __SIZEOF_INT128__
-
-	return ret;
-}
-
-static size_t mul(size_t count, size_t size)
-{
-	unsigned count_high = count >> BITS_PER_HALF_WORD;
-	unsigned count_low = count;
-
-	unsigned size_high = size >> BITS_PER_HALF_WORD;
-	unsigned size_low = size;
-
-	if (!count_high && !size_high)
-		return count * size;
-
-	if (count_high && size_high)
-		return SIZE_MAX;
-
-	size_t t1 = 0;
-	size_t t2 = 0;
-
-	if (count_high) {
-		t1 = (size_t)count_high * size_low;
-		t2 = (size_t)count_low * size_low;
-	} else {
-		t1 = (size_t)size_high * count_low;
-		t2 = (size_t)size_low * count_low;
-	}
-
-	if ((t1 + (t2 >> BITS_PER_HALF_WORD)) >= UINT32_MAX)
-		return SIZE_MAX;
-
-	return (t1 << BITS_PER_HALF_WORD) + t2;
-}
-
-static size_t fast_mul(size_t count, size_t size)
-{
-	__uint128_t c = count;
-	__uint128_t s = size;
-	__uint128_t ret = c * s;
-
-	return ret >> BITS_PER_LONG ? SIZE_MAX : ret;
 }

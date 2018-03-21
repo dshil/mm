@@ -5,14 +5,10 @@
 #include <sys/mman.h>
 
 #include "buddy.h"
-
-static void *mm_mmap(size_t size);
+#include "utils.h"
 
 static void *alloc_block(unsigned level);
 static void free_block(void *block, unsigned level);
-
-static inline int is_pow_of_2(size_t size);
-static inline unsigned next_pow_of_2(size_t size);
 
 static inline size_t total_size(void);
 static inline unsigned get_level(size_t bytes);
@@ -184,19 +180,6 @@ static void remove_block(const void *block, unsigned level)
 	}
 }
 
-static void *mm_mmap(size_t size)
-{
-	void *p = NULL;
-
-#ifdef __APPLE__
-	p = mmap(0, size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANON, -1, 0);
-#else
-	p = mmap(0, size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
-#endif // ifdef __APPLE__
-
-	return (p == MAP_FAILED) ? NULL : p;
-}
-
 static inline unsigned get_level(size_t bytes)
 {
 	return (unsigned)log2(next_pow_of_2(bytes) / sizeof(Header));
@@ -275,26 +258,6 @@ static inline char *get_level_index(void)
 static inline size_t max_blocks_on_level(unsigned level)
 {
 	return (1UL << level);
-}
-
-static inline unsigned next_pow_of_2(size_t size)
-{
-	if (is_pow_of_2(size))
-		return size;
-
-	size = size - 1;
-	size = size | (size >> 1);
-	size = size | (size >> 2);
-	size = size | (size >> 4);
-	size = size | (size >> 8);
-	size = size | (size >>16);
-
-	return size + 1;
-}
-
-static inline int is_pow_of_2(size_t size)
-{
-	return !(size & (size - 1));
 }
 
 /*
