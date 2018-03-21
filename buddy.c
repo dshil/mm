@@ -184,8 +184,27 @@ void *mrealloc(void *ptr, size_t size)
 	if (!ptr)
 		return mmalloc(size);
 
+	unsigned realloc_level = get_level(size);
+	if (realloc_level > BUDDY_MAX_LEVEL)
+		return NULL;
+
+	realloc_level = BUDDY_MAX_LEVEL - realloc_level;
+
+	const size_t realloc_sz = sizeof_block(realloc_level);
+	const unsigned block_level = find_block_level(ptr);
+	const size_t block_size = sizeof_block(block_level);
+
+	if (realloc_sz == block_size)
+		return ptr;
+
+	void *p = mmalloc(size);
+	if (!p)
+		return NULL;
+
+	memcpy(p, ptr, block_size);
 	mfree(ptr);
-	return mmalloc(size);
+
+	return p;
 }
 
 static void free_block(void *block, unsigned level)
