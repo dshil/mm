@@ -68,14 +68,14 @@ static void remove_block(const void *bp, unsigned level);
  * The last step is to calculate the number of leafs, the smallest block of the
  * allocator.
  *
- * The leaf size is determined by the Header. It should be at least 16 bytes to
- * be able to store 2 pointers of free list but keep in mind that this structure
- * is implementation dependent.
+ * The leaf size is determined by the buddy_node_t. It should be at least 16
+ * bytes to be able to store 2 pointers of free list but keep in mind that this
+ * structure is implementation dependent.
  *
- * Returned bytes number will be at least sizeof(Header) because for allocator
- * with the small number of levels we'll need less than a byte to store all
- * the meta data. Returned value can be treated as: first half of bytes is used
- * for level index, the second half - for the merge index.
+ * Returned bytes number will be at least sizeof(buddy_node_t) because for
+ * allocator with the small number of levels we'll need less than a byte to
+ * store all the meta data. Returned value can be treated as: first half of
+ * bytes is used for level index, the second half - for the merge index.
  */
 static size_t sizeof_meta(void);
 
@@ -122,7 +122,7 @@ static unsigned find_block_level(const void *block);
 static void set_block_level(const void *block, unsigned level);
 static int check_block_level(const void *block, unsigned level);
 static int toggle_allocated_block(const void *block, unsigned level);
-static void fill_block_meta(const void *block, unsigned level, block_meta *bm);
+static void fill_buddy_meta(const void *block, unsigned level, buddy_meta_t *bm);
 
 static void *freelists[BUDDY_MAX_LEVEL+1];
 static void *bufp = NULL;
@@ -262,8 +262,8 @@ static void *alloc_block(unsigned level)
 
 static void push_block_front(const void *ptr, unsigned level)
 {
-	Header *head = (Header *)freelists[level];
-	Header *bp = (Header *)ptr;
+	buddy_node_t *head = (buddy_node_t *)freelists[level];
+	buddy_node_t *bp = (buddy_node_t *)ptr;
 
 	if (head) {
 		bp->next = head;
@@ -278,11 +278,11 @@ static void push_block_front(const void *ptr, unsigned level)
 
 static void *pop_block_front(unsigned level)
 {
-	Header *head = (Header *)freelists[level];
+	buddy_node_t *head = (buddy_node_t *)freelists[level];
 	if (!head)
 		return NULL;
 
-	Header *bp = head->next;
+	buddy_node_t *bp = head->next;
 	head->next = head->prev = NULL;
 	if (bp)
 		bp->prev = NULL;
@@ -293,14 +293,14 @@ static void *pop_block_front(unsigned level)
 
 static void remove_block(const void *block, unsigned level)
 {
-	Header *head = (Header *)freelists[level];
+	buddy_node_t *head = (buddy_node_t *)freelists[level];
 
 	if (head == block) {
 		pop_block_front(level);
 		return;
 	}
 
-	Header *p = head;
+	buddy_node_t *p = head;
 	for (; p != NULL; p = p->next) {
 		if (p == block) {
 			p->prev->next = p->next;
@@ -314,12 +314,12 @@ static void remove_block(const void *block, unsigned level)
 
 static inline unsigned get_level(size_t bytes)
 {
-	return (unsigned)log2(next_pow_of_2(bytes) / sizeof(Header));
+	return (unsigned)log2(next_pow_of_2(bytes) / sizeof(buddy_node_t));
 }
 
 static inline size_t total_size(void)
 {
-	return (1UL << BUDDY_MAX_LEVEL) * sizeof(Header);
+	return (1UL << BUDDY_MAX_LEVEL) * sizeof(buddy_node_t);
 }
 
 static inline size_t sizeof_block(unsigned level)
@@ -331,9 +331,10 @@ static size_t sizeof_meta(void)
 {
 	const size_t num_blocks = 1UL << (1 + BUDDY_MAX_LEVEL);
 	const size_t num_bytes = num_blocks / 8;
-	const size_t leafs_num = num_bytes / sizeof(Header);
+	const size_t leafs_num = num_bytes / sizeof(buddy_node_t);
 
-	return (leafs_num == 0) ? sizeof(Header) : leafs_num * sizeof(Header);
+	return (leafs_num == 0) ?
+		sizeof(buddy_node_t) : leafs_num * sizeof(buddy_node_t);
 }
 
 static inline char *get_merge_index(void)
@@ -380,8 +381,8 @@ static unsigned find_block_level(const void *block)
 
 static void set_block_level(const void *block, unsigned level)
 {
-	block_meta bm;
-	fill_block_meta(block, level, &bm);
+	buddy_meta_t bm;
+	fill_buddy_meta(block, level, &bm);
 
 	char *level_index = get_level_index() + bm.bytes_offset;
 	*level_index |= (1UL << bm.bits_offset);
@@ -389,8 +390,8 @@ static void set_block_level(const void *block, unsigned level)
 
 static int check_block_level(const void *block, unsigned level)
 {
-	block_meta bm;
-	fill_block_meta(block, level, &bm);
+	buddy_meta_t bm;
+	fill_buddy_meta(block, level, &bm);
 
 	char *level_index = get_level_index() + bm.bytes_offset;
 	return (*level_index >> bm.bits_offset) & 1UL;
@@ -398,11 +399,11 @@ static int check_block_level(const void *block, unsigned level)
 
 static int toggle_allocated_block(const void *block, unsigned level)
 {
-	block_meta bm;
-	fill_block_meta(block, level, &bm);
+	buddy_meta_t bm;
+	fill_buddy_meta(block, level, &bm);
 
 	if (bm.index_on_level % 2 != 0)
-		fill_block_meta(block - bm.size, level, &bm);
+		fill_buddy_meta(block - bm.size, level, &bm);
 
 	char *merge_index = get_merge_index() + bm.bytes_offset;
 	*merge_index ^= (1UL << bm.bits_offset);
@@ -410,9 +411,9 @@ static int toggle_allocated_block(const void *block, unsigned level)
 	return (*merge_index >> bm.bits_offset) & 1U;
 }
 
-static void fill_block_meta(const void *block, unsigned level, block_meta *bm)
+static void fill_buddy_meta(const void *block, unsigned level, buddy_meta_t *bm)
 {
-	memset(bm, 0, sizeof(block_meta));
+	memset(bm, 0, sizeof(buddy_meta_t));
 	bm->size = sizeof_block(level);
 	bm->index_on_level = (block - bufp) / bm->size;
 	bm->index = (1UL << level) - 1 + bm->index_on_level;
