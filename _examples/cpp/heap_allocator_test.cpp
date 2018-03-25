@@ -7,8 +7,11 @@ class Foo {
 public:
     ~Foo() {
     }
+    Foo(size_t num) : num_(num) {
+    }
+    Foo() {}
 private:
-    int num_;
+    size_t num_;
 };
 
 int main() {
