@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include "kr.h"
-#include "mm.h"
-#include "tester.h"
+#include "include/kr.h"
+#include "include/mm.h"
+#include "include/tester.h"
 
 int main()
 {

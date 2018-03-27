@@ -3,9 +3,9 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "mm.h"
-#include "buddy.h"
-#include "utils.h"
+#include "include/mm.h"
+#include "include/buddy.h"
+#include "include/utils.h"
 
 /*
  * Returns a free block for the provided level. If there is no required block
