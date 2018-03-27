@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <sys/mman.h>
 
-#include "utils.h"
+#include "include/utils.h"
 
 static size_t mul(size_t count, size_t size);
 static size_t fast_mul(size_t count, size_t size);

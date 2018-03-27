@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include "heap_allocator.h"
+#include "include/heap_allocator.h"
 
 class Foo {
 public:
