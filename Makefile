@@ -7,6 +7,9 @@ all:
 buddy:
 	gcc -std=gnu99 \
 		-Werror \
+		-Wextra \
+		-Wcast-qual \
+		-Wpointer-arith \
 		-Wpedantic \
 		-lm -I. \
 		lib/buddy.c lib/utils.c lib/tester.c \
@@ -16,6 +19,9 @@ buddy:
 kr:
 	gcc -std=gnu99 \
 		-Werror \
+		-Wextra \
+		-Wcast-qual \
+		-Wpointer-arith \
 		-Wpedantic \
 		-lm -I. \
 		lib/kr.c lib/utils.c lib/tester.c \
