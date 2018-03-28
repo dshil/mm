@@ -29,7 +29,7 @@ kr:
 	make clean
 
 buddy_allocator_example:
-	g++ \
+	clang++ \
 		-Werror \
 		-Wextra \
 		-Wcast-qual \
@@ -44,7 +44,7 @@ buddy_allocator_example:
 	make clean
 
 heap_allocator_example:
-	g++ \
+	clang++ \
 		-Werror \
 		-Wextra \
 		-Wcast-qual \
