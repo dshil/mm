@@ -29,8 +29,13 @@ kr:
 	make clean
 
 buddy_allocator_example:
-	g++ -Werror -Wpedantic -lm -I. \
-		-x c lib/buddy.c lib/utils.c \
+	g++ \
+		-Werror \
+		-Wextra \
+		-Wcast-qual \
+		-Wpointer-arith \
+		-Wpedantic \
+		-lm -I. -x c lib/buddy.c lib/utils.c \
 		-I ./_examples/cpp -x c++ \
 		_examples/cpp/lib/iallocator.cpp \
 		_examples/cpp/lib/heap_buddy_allocator.cpp \
@@ -39,8 +44,13 @@ buddy_allocator_example:
 	make clean
 
 heap_allocator_example:
-	g++ -Werror -Wpedantic -lm -I. \
-		-x c lib/buddy.c lib/utils.c \
+	g++ \
+		-Werror \
+		-Wextra \
+		-Wcast-qual \
+		-Wpointer-arith \
+		-Wpedantic \
+		-lm -I. -x c lib/buddy.c lib/utils.c \
 		-I ./_examples/cpp -x c++ \
 		_examples/cpp/lib/iallocator.cpp \
 		_examples/cpp/lib/heap_allocator.cpp \
