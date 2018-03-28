@@ -37,8 +37,8 @@ static inline size_t sizeof_block(unsigned level);
 static inline size_t max_blocks_on_level(unsigned level);
 
 static char *pop_block_front(unsigned level);
-static void push_block_front(const char *bp, unsigned level);
-static void remove_block(const char *bp, unsigned level);
+static void push_block_front(char *bp, unsigned level);
+static void remove_block(char *bp, unsigned level);
 
 /*
  * returns the total size of meta data.
@@ -264,7 +264,7 @@ static char *alloc_block(unsigned level)
 	return ret;
 }
 
-static void push_block_front(const char *ptr, unsigned level)
+static void push_block_front(char *ptr, unsigned level)
 {
 	buddy_node_t *head = (buddy_node_t *)freelists[level];
 	buddy_node_t *bp = (buddy_node_t *)ptr;
@@ -295,7 +295,7 @@ static char *pop_block_front(unsigned level)
 	return (char *)head;
 }
 
-static void remove_block(const char *block, unsigned level)
+static void remove_block(char *block, unsigned level)
 {
 	buddy_node_t *head = (buddy_node_t *)freelists[level];
 	buddy_node_t *block_ptr = (buddy_node_t *)block;
