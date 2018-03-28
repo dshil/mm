@@ -5,13 +5,19 @@ all:
 	make heap_allocator_example
 
 buddy:
-	gcc -std=c99 -Werror -Wpedantic -lm -I. \
+	gcc -std=gnu99 \
+		-Werror \
+		-Wpedantic \
+		-lm -I. \
 		lib/buddy.c lib/utils.c lib/tester.c \
 		test/test_buddy.c && ./a.out
 	make clean
 
 kr:
-	gcc -std=c99 -Werror -Wpedantic -I. \
+	gcc -std=gnu99 \
+		-Werror \
+		-Wpedantic \
+		-lm -I. \
 		lib/kr.c lib/utils.c lib/tester.c \
 		test/test_kr.c && ./a.out
 	make clean
