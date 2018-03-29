@@ -1,6 +1,7 @@
 all:
 	make buddy
 	make kr
+	make pool
 	make buddy_allocator_example
 	make heap_allocator_example
 
@@ -14,6 +15,18 @@ buddy:
 		-lm -I. \
 		lib/buddy.c lib/utils.c lib/tester.c \
 		test/test_buddy.c && ./a.out
+	make clean
+
+pool:
+	gcc -std=gnu99 \
+		-Werror \
+		-Wextra \
+		-Wcast-qual \
+		-Wpointer-arith \
+		-Wpedantic \
+		-I. \
+		lib/pool.c lib/utils.c \
+		test/test_pool.c && ./a.out
 	make clean
 
 kr:

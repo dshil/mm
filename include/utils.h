@@ -15,6 +15,7 @@ void *mm_sbrk(size_t size);
  *  - OS X Yosimite 10.10.5 and later
  */
 void *mm_mmap(size_t size);
+int mm_munmap(void *ptr, size_t size);
 
 /*
  * Returns the result of multiplication @count and @size. SIZE_MAX will be
@@ -24,4 +25,3 @@ size_t safe_mul(size_t count, size_t size);
 
 unsigned next_pow_of_2(size_t size);
 int is_pow_of_2(size_t size);
-
