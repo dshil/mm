@@ -23,6 +23,11 @@ void *mm_mmap(size_t size)
 	return (p == MAP_FAILED) ? NULL : p;
 }
 
+int mm_munmap(void *ptr, size_t size)
+{
+	return munmap(ptr, size);
+}
+
 void *mm_sbrk(size_t size)
 {
 	void *p = NULL;
