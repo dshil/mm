@@ -155,10 +155,7 @@ static Header *mm(size_t size)
 	Header *p = NULL;
 	void *ptr = NULL;
 
-	if (size >= MMAP_THRESHOLD)
-		ptr = mm_mmap(size * sizeof(Header));
-	else
-		ptr = mm_sbrk(size * sizeof(Header));
+	ptr = mm_mmap(size * sizeof(Header));
 
 	if (!ptr)
 		return NULL;

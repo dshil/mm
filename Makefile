@@ -6,64 +6,65 @@ all:
 	make heap_allocator_example
 
 buddy:
-	gcc -std=gnu99 \
+	gcc -std=c99 \
 		-Werror \
 		-Wextra \
 		-Wcast-qual \
 		-Wpointer-arith \
 		-Wpedantic \
-		-lm -I. \
-		lib/buddy.c lib/utils.c lib/tester.c \
-		test/test_buddy.c && ./a.out
+		-I . \
+		lib/buddy.c lib/utils.c lib/tester.c test/test_buddy.c \
+		-lm \
+		&& ./a.out
 	make clean
 
 pool:
-	gcc -std=gnu99 \
+	gcc -std=c99 \
 		-Werror \
 		-Wextra \
 		-Wcast-qual \
 		-Wpointer-arith \
 		-Wpedantic \
-		-I. \
-		lib/pool.c lib/utils.c \
-		test/test_pool.c && ./a.out
+		-I . \
+		lib/pool.c lib/utils.c test/test_pool.c \
+		&& ./a.out
 	make clean
 
 kr:
-	gcc -std=gnu99 \
+	gcc -std=c99 \
 		-Werror \
 		-Wextra \
 		-Wcast-qual \
 		-Wpointer-arith \
 		-Wpedantic \
-		-lm -I. \
-		lib/kr.c lib/utils.c lib/tester.c \
-		test/test_kr.c && ./a.out
+		-I . \
+		lib/kr.c lib/utils.c lib/tester.c test/test_kr.c \
+		&& ./a.out
 	make clean
 
 buddy_allocator_example:
-	clang++ \
+	g++ \
 		-Werror \
 		-Wextra \
 		-Wcast-qual \
 		-Wpointer-arith \
 		-Wpedantic \
-		-lm -I. -x c lib/buddy.c lib/utils.c \
+		-I . -x c lib/buddy.c lib/utils.c \
 		-I ./_examples/cpp -x c++ \
 		_examples/cpp/lib/iallocator.cpp \
 		_examples/cpp/lib/heap_buddy_allocator.cpp \
 		_examples/cpp/lib/heap_allocator_test.cpp \
+		-lm \
 		&& ./a.out
 	make clean
 
 heap_allocator_example:
-	clang++ \
+	g++ \
 		-Werror \
 		-Wextra \
 		-Wcast-qual \
 		-Wpointer-arith \
 		-Wpedantic \
-		-lm -I. -x c lib/buddy.c lib/utils.c \
 		-I ./_examples/cpp -x c++ \
 		_examples/cpp/lib/iallocator.cpp \
 		_examples/cpp/lib/heap_allocator.cpp \

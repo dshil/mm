@@ -11,7 +11,5 @@ union header {
 typedef union header Header;
 
 #define BLOCKSIZ 4096
-#define MMAP_THRESHOLD (BLOCKSIZ*4)
 
 void mfree_arbitrary(void *ptr, size_t size);
-

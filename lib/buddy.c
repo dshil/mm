@@ -3,7 +3,6 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "include/mm.h"
 #include "include/buddy.h"
 #include "include/utils.h"
 
