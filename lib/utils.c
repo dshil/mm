@@ -2,23 +2,28 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <sys/mman.h>
+#include <fcntl.h>
 
 #include "include/utils.h"
 
 static size_t mul(size_t count, size_t size);
 static size_t fast_mul(size_t count, size_t size);
 
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-
 void *mm_mmap(size_t size)
 {
 	void *p = NULL;
 
-#ifdef __APPLE__
+#ifdef MAP_ANON
 	p = mmap(0, size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANON, -1, 0);
-#else
+#elif MAP_ANONYMOUS
 	p = mmap(0, size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
-#endif // ifdef __APPLE__
+#else
+	int fd = open("/dev/zero", O_RDWR);
+	if (fd == -1)
+		return NULL;
+
+	p = mmap(0, size, PROT_READ|PROT_WRITE, MAP_PRIVATE, fd, 0);
+#endif // ifdef MAP_ANON || MAP_ANONYMOUS
 
 	return (p == MAP_FAILED) ? NULL : p;
 }
@@ -26,12 +31,6 @@ void *mm_mmap(size_t size)
 int mm_munmap(void *ptr, size_t size)
 {
 	return munmap(ptr, size);
-}
-
-void *mm_sbrk(size_t size)
-{
-	void *p = NULL;
-	return ((p = sbrk(size)) == (void *)(-1)) ? NULL : p;
 }
 
 size_t safe_mul(size_t count, size_t size)

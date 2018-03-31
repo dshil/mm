@@ -5,8 +5,6 @@
 #define BITS_PER_LONG __WORDSIZE
 #define BITS_PER_HALF_WORD (__WORDSIZE / 2)
 
-void *mm_sbrk(size_t size);
-
 /*
  * Returns @size bytes allocated by portable version of mmap(2).
  *
