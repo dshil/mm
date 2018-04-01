@@ -1,3 +1,12 @@
+LINTFLAGS = \
+	 -Werror \
+	 -Wextra \
+	 -Wcast-qual \
+	 -Wpointer-arith \
+	 -Wpedantic
+
+CFLAGS = -std=c99
+
 all:
 	make buddy
 	make kr
@@ -6,50 +15,27 @@ all:
 	make heap_allocator_example
 
 buddy:
-	gcc -std=c99 \
-		-Werror \
-		-Wextra \
-		-Wcast-qual \
-		-Wpointer-arith \
-		-Wpedantic \
-		-I . \
+	gcc -I. $(CFLAGS) $(LINTFLAGS) \
 		lib/buddy.c lib/utils.c lib/tester.c test/test_buddy.c \
 		-lm \
 		&& ./a.out
 	make clean
 
 pool:
-	gcc -std=c99 \
-		-Werror \
-		-Wextra \
-		-Wcast-qual \
-		-Wpointer-arith \
-		-Wpedantic \
-		-I . \
+	gcc -I. $(CFLAGS) $(LINTFLAGS) \
 		lib/pool.c lib/utils.c test/test_pool.c \
 		&& ./a.out
 	make clean
 
 kr:
-	gcc -std=c99 \
-		-Werror \
-		-Wextra \
-		-Wcast-qual \
-		-Wpointer-arith \
-		-Wpedantic \
-		-I . \
+	gcc -I. $(CFLAGS) $(LINTFLAGS) \
 		lib/kr.c lib/utils.c lib/tester.c test/test_kr.c \
 		&& ./a.out
 	make clean
 
 buddy_allocator_example:
-	g++ \
-		-Werror \
-		-Wextra \
-		-Wcast-qual \
-		-Wpointer-arith \
-		-Wpedantic \
-		-I . -x c lib/buddy.c lib/utils.c \
+	g++ $(LINTFLAGS) \
+		-I. -x c lib/buddy.c lib/utils.c \
 		-I ./_examples/cpp -x c++ \
 		_examples/cpp/lib/iallocator.cpp \
 		_examples/cpp/lib/heap_buddy_allocator.cpp \
@@ -59,12 +45,7 @@ buddy_allocator_example:
 	make clean
 
 heap_allocator_example:
-	g++ \
-		-Werror \
-		-Wextra \
-		-Wcast-qual \
-		-Wpointer-arith \
-		-Wpedantic \
+	g++ $(LINTFLAGS) \
 		-I ./_examples/cpp -x c++ \
 		_examples/cpp/lib/iallocator.cpp \
 		_examples/cpp/lib/heap_allocator.cpp \
