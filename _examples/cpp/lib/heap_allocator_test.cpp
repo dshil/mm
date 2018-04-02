@@ -14,6 +14,10 @@ private:
     size_t num_;
 };
 
+struct Bar {
+    int bar_;
+};
+
 int main() {
     core::HeapAllocator allocator;
     {
@@ -22,7 +26,12 @@ int main() {
         MM_FREE(p, allocator);
     }
     {
-        Foo *p = MM_ALLOC_ARRAY(Foo, 3, allocator);
+        /* Foo *p = MM_ALLOC_ARRAY(Foo, 3, allocator); */
+        /* assert(p); */
+        /* MM_FREE_ARRAY(p, allocator); */
+    }
+    {
+        Bar *p = MM_ALLOC_ARRAY(Bar, 10, allocator);
         assert(p);
         MM_FREE_ARRAY(p, allocator);
     }
