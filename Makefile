@@ -6,7 +6,7 @@ LINTFLAGS = \
 	 -Wpedantic
 
 CFLAGS = -std=c99
-CPPFLAGS = -std=c99
+CPPFLAGS = -std=c++98
 
 all:
 	make prep
@@ -40,7 +40,7 @@ kr:
 
 buddy_allocator_example:
 	make prep
-	g++ -c -I. -I ./_examples/cpp $(LINTFLAGS) \
+	g++ $(LINTFLAGS) $(CPPFLAGS) -c -I. -I ./_examples/cpp \
 		_examples/cpp/lib/iallocator.cpp \
 		_examples/cpp/lib/heap_buddy_allocator.cpp \
 		_examples/cpp/lib/heap_allocator_test.cpp; \
@@ -50,7 +50,7 @@ buddy_allocator_example:
 	make clean
 
 heap_allocator_example:
-	g++ $(LINTFLAGS) \
+	g++ $(LINTFLAGS) $(CPPFLAGS) \
 		-I ./_examples/cpp \
 		_examples/cpp/lib/iallocator.cpp \
 		_examples/cpp/lib/heap_allocator.cpp \
