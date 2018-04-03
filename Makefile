@@ -6,47 +6,52 @@ LINTFLAGS = \
 	 -Wpedantic
 
 CFLAGS = -std=c99
+CPPFLAGS = -std=c99
 
 all:
+	make prep
 	make buddy
 	make kr
 	make pool
 	make buddy_allocator_example
 	make heap_allocator_example
 
+prep:
+	mkdir -p build; \
+	gcc -c -I . $(CFLAGS) $(LINTFLAGS) lib/buddy.c lib/utils.c; \
+	ar crs build/libbuddy.a buddy.o utils.o; \
+	rm -rf buddy.o utils.o
+
 buddy:
-	gcc -I. $(CFLAGS) $(LINTFLAGS) \
-		lib/buddy.c lib/utils.c lib/tester.c test/test_buddy.c \
-		-lm \
-		&& ./a.out
+	make prep
+	gcc -I. -L ./build $(CFLAGS) $(LINTFLAGS) \
+		lib/tester.c test/test_buddy.c -lbuddy -lm; ./a.out
 	make clean
 
 pool:
 	gcc -I. $(CFLAGS) $(LINTFLAGS) \
-		lib/pool.c lib/utils.c test/test_pool.c \
-		&& ./a.out
+		lib/pool.c lib/utils.c test/test_pool.c; ./a.out
 	make clean
 
 kr:
 	gcc -I. $(CFLAGS) $(LINTFLAGS) \
-		lib/kr.c lib/utils.c lib/tester.c test/test_kr.c \
-		&& ./a.out
+		lib/kr.c lib/utils.c lib/tester.c test/test_kr.c; ./a.out
 	make clean
 
 buddy_allocator_example:
-	g++ $(LINTFLAGS) \
-		-I. -x c lib/buddy.c lib/utils.c \
-		-I ./_examples/cpp -x c++ \
+	make prep
+	g++ -c -I. -I ./_examples/cpp $(LINTFLAGS) \
 		_examples/cpp/lib/iallocator.cpp \
 		_examples/cpp/lib/heap_buddy_allocator.cpp \
-		_examples/cpp/lib/heap_allocator_test.cpp \
-		-lm \
-		&& ./a.out
+		_examples/cpp/lib/heap_allocator_test.cpp; \
+	ar crs build/libbuddycpp.a \
+		iallocator.o heap_buddy_allocator.o heap_allocator_test.o; \
+	g++ -L ./build -lbuddy -lbuddycpp -lm; ./a.out
 	make clean
 
 heap_allocator_example:
 	g++ $(LINTFLAGS) \
-		-I ./_examples/cpp -x c++ \
+		-I ./_examples/cpp \
 		_examples/cpp/lib/iallocator.cpp \
 		_examples/cpp/lib/heap_allocator.cpp \
 		_examples/cpp/lib/heap_allocator_test.cpp \
