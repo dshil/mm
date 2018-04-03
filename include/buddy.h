@@ -14,7 +14,7 @@ typedef struct _buddy_meta {
 	unsigned bits_offset;
 } buddy_meta_t;
 
-#define BUDDY_MAX_LEVEL 30
+#define BUDDY_MAX_LEVEL 28
 
 /*
  * Frees block the same as mfree does but makes it faster because we don't spend
