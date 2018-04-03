@@ -46,7 +46,7 @@ buddy_allocator_example:
 		_examples/cpp/lib/heap_allocator_test.cpp; \
 	ar crs build/libbuddycpp.a \
 		iallocator.o heap_buddy_allocator.o heap_allocator_test.o; \
-	g++ -L ./build -lbuddy -lbuddycpp -lm; ./a.out
+	g++ -L ./build -lbuddycpp -lbuddy -lm; ./a.out
 	make clean
 
 heap_allocator_example:
@@ -54,8 +54,8 @@ heap_allocator_example:
 		-I ./_examples/cpp \
 		_examples/cpp/lib/iallocator.cpp \
 		_examples/cpp/lib/heap_allocator.cpp \
-		_examples/cpp/lib/heap_allocator_test.cpp \
-		&& ./a.out
+		_examples/cpp/lib/heap_allocator_test.cpp; \
+		./a.out
 	make clean
 
 clean:
