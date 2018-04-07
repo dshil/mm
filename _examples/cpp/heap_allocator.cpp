@@ -1,6 +1,6 @@
 #include <stdlib.h>
 
-#include "include/heap_allocator.h"
+#include "heap_allocator.h"
 
 namespace core {
 

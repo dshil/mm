@@ -3,9 +3,9 @@
 #include <assert.h>
 #include <math.h>
 
-#include "include/mm.h"
-#include "include/buddy.h"
-#include "include/tester.h"
+#include "memory/mm.h"
+#include "memory/buddy.h"
+#include "tester.h"
 
 int main()
 {

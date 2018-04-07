@@ -1,15 +1,33 @@
+CC := gcc
+CFLAGS := -std=c99
+CPPFLAGS := -std=c++98
+MODULE := memory
 LINTFLAGS = \
-	 -Werror \
-	 -Wextra \
-	 -Wcast-qual \
-	 -Wpointer-arith \
-	 -Wpedantic
+	    -Werror \
+	    -Wextra \
+	    -Wcast-qual \
+	    -Wpointer-arith \
+	    -Wpedantic
 
-CFLAGS = -std=c99
-CPPFLAGS = -std=c++98
+SDIR := src/modules/$(MODULE)
+ODIR := build/modules/$(MODULE)
+SRC_FILES := $(wildcard $(SDIR)/*.c)
+OBJ_FILES := $(patsubst $(SDIR)/%.c,$(ODIR)/%.o,$(SRC_FILES))
+
+TSDIR := src/tests/$(MODULE)
+TODIR := build/tests/$(MODULE)
+TSRC_FILES := $(wildcard $(TSDIR)/*.c)
+TOBJ_FILES := $(patsubst $(TSDIR)/%.c,$(TODIR)/%.o,$(TSRC_FILES))
+
+ESDIR := _examples/cpp
+EODIR := build/_examples/cpp
+ESRC_FILES := $(wildcard $(ESDIR)/*.cpp)
+EOBJ_FILES := $(patsubst $(ESDIR)/%.cpp,$(EODIR)/%.o,$(ESRC_FILES))
+
+.PHONY: $(MODULE) tests clean prep examples buddy kr pool \
+	buddy_allocator_example heap_allocator_example
 
 all:
-	make prep
 	make buddy
 	make kr
 	make pool
@@ -17,47 +35,46 @@ all:
 	make heap_allocator_example
 
 prep:
-	mkdir -p build; \
-	gcc -c -I . $(CFLAGS) $(LINTFLAGS) lib/buddy.c lib/utils.c; \
-	ar crs build/libbuddy.a buddy.o utils.o; \
-	rm -rf buddy.o utils.o
+	mkdir -p build/modules/$(MODULE); \
+	mkdir -p tests/modules/$(MODULE); \
+	mkdir -p $(EODIR)
 
-buddy:
+$(ODIR)/%.o: $(SDIR)/%.c
+	$(CC) -c $< $(CFLAGS) $(LINTFLAGS) -o $@
+
+$(TODIR)/%.o: $(TSDIR)/%.c
+	$(CC) -I ./src/modules -c $< $(CFLAGS) $(LINTFLAGS) -o $@
+
+$(MODULE): $(OBJ_FILES)
+
+$(EODIR)/%.o: $(ESDIR)/%.cpp
+	g++ -I ./src/modules -c $< $(CPPFLAGS) $(LINTFLAGS) -o $@
+
+buddy: $(TOBJ_FILES) $(OBJ_FILES)
 	make prep
-	gcc -I. -L ./build $(CFLAGS) $(LINTFLAGS) \
-		lib/tester.c test/test_buddy.c -lbuddy -lm; ./a.out
-	make clean
+	gcc $(CFLAGS) $(ODIR)/utils.o $(ODIR)/buddy.o $(TODIR)/tester.o \
+		$(TODIR)/test_buddy.o -lm; ./a.out; rm -rf ./a.out;
 
-pool:
-	gcc -I. $(CFLAGS) $(LINTFLAGS) \
-		lib/pool.c lib/utils.c test/test_pool.c; ./a.out
-	make clean
-
-kr:
-	gcc -I. $(CFLAGS) $(LINTFLAGS) \
-		lib/kr.c lib/utils.c lib/tester.c test/test_kr.c; ./a.out
-	make clean
-
-buddy_allocator_example:
+kr: $(TOBJ_FILES) $(OBJ_FILES)
 	make prep
-	g++ $(LINTFLAGS) $(CPPFLAGS) -c -I. -I ./_examples/cpp \
-		_examples/cpp/lib/iallocator.cpp \
-		_examples/cpp/lib/heap_buddy_allocator.cpp \
-		_examples/cpp/lib/heap_allocator_test.cpp; \
-	ar crs build/libbuddycpp.a \
-		iallocator.o heap_buddy_allocator.o heap_allocator_test.o; \
-	g++ -L ./build -lbuddycpp -lbuddy -lm; ./a.out
-	make clean
+	gcc $(CFLAGS) $(ODIR)/utils.o $(ODIR)/kr.o $(TODIR)/tester.o \
+		$(TODIR)/test_kr.o; ./a.out; rm -rf ./a.out;
 
-heap_allocator_example:
-	g++ $(LINTFLAGS) $(CPPFLAGS) \
-		-I ./_examples/cpp \
-		_examples/cpp/lib/iallocator.cpp \
-		_examples/cpp/lib/heap_allocator.cpp \
-		_examples/cpp/lib/heap_allocator_test.cpp; \
-		./a.out
-	make clean
+pool: $(TOBJ_FILES) $(OBJ_FILES)
+	make prep
+	gcc $(CFLAGS) $(ODIR)/utils.o $(ODIR)/pool.o $(TODIR)/test_pool.o; \
+		./a.out; rm -rf ./a.out;
+
+buddy_allocator_example: $(EOBJ_FILES) $(OBJ_FILES)
+	make prep
+	g++ $(ODIR)/utils.o $(ODIR)/buddy.o \
+		$(EODIR)/iallocator.o $(EODIR)/heap_buddy_allocator.o \
+		$(EODIR)/heap_allocator_test.o -lm; ./a.out; rm -rf ./a.out
+
+heap_allocator_example: $(EOBJ_FILES)
+	make prep
+	g++ $(EODIR)/iallocator.o $(EODIR)/heap_allocator.o \
+		$(EODIR)/heap_allocator_test.o -lm; ./a.out; rm -rf ./a.out
 
 clean:
-	rm -rf *.o *.out
-
+	rm -rf $(ODIR)/*.o $(TODIR)/*.o $(EODIR)/*.o

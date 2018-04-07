@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "include/utils.h"
-#include "include/pool.h"
+#include "utils.h"
+#include "pool.h"
 
 static pool_config_t *confp = NULL;
 static char *bufp = NULL;

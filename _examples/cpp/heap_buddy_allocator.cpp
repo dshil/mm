@@ -1,7 +1,7 @@
-#include "include/heap_allocator.h"
+#include "heap_allocator.h"
 
 extern "C" {
-#include "include/mm.h"
+#include "memory/mm.h"
 }
 
 namespace core {
