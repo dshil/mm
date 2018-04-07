@@ -2,9 +2,9 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "include/kr.h"
-#include "include/mm.h"
-#include "include/utils.h"
+#include "kr.h"
+#include "mm.h"
+#include "utils.h"
 
 static Header base;
 static Header *freep = NULL;

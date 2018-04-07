@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include "include/mm.h"
+#include "memory/mm.h"
 
 void test_main(void)
 {
