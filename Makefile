@@ -1,6 +1,6 @@
 CC := gcc
 CFLAGS := -std=c99
-CPPFLAGS := -std=c++98
+CPPFLAGS := -std=c++11
 MODULE := memory
 LINTFLAGS = \
 	    -Werror \
