@@ -1,3 +1,6 @@
+#ifndef MM_H_
+#define MM_H_
+
 /*
  * It doesn't guarantee for returned memory area to be zeroed. It's
  * possible that returned area will be zeroed because it might be the first
@@ -27,3 +30,5 @@ void *mrealloc(void *ptr, size_t size);
  * Frees a memory pointed by @ptr.
  */
 void mfree(void *ptr);
+
+#endif // MM_H_

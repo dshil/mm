@@ -3,8 +3,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "memory/utils.h"
 #include "buddy.h"
-#include "utils.h"
 
 /*
  * Returns a free block for the provided level. If there is no required block

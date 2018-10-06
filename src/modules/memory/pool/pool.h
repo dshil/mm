@@ -1,3 +1,6 @@
+#ifndef MM_POOL_H_
+#define MM_POOL_H_
+
 /*
  * Pool is used to dynamically allocate/free blocks of fixed size from the fixed
  * pool of memory.
@@ -26,3 +29,5 @@ typedef struct pool_config {
 void mm_pool_put(void *ptr);
 void *mm_pool_get(void);
 int mm_initialize_pool(pool_config_t *config);
+
+#endif // MM_POOL_H_

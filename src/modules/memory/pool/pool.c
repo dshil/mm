@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "utils.h"
+#include "memory/utils.h"
 #include "pool.h"
 
 static pool_config_t *confp = NULL;
