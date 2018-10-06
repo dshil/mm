@@ -1,3 +1,6 @@
+#ifndef MM_IALLOCATOR_H_
+#define MM_IALLOCATOR_H_
+
 #include <stddef.h>
 #include <type_traits>
 
@@ -116,11 +119,6 @@ void dealloc_array(T *ptr, core::IAllocator &allocator, NonPODType) {
 #define MM_FREE_ARRAY(ptr, allocator) \
     dealloc_array(ptr, allocator)
 
-inline void *operator new(size_t size, void *ptr) throw() {
-    (void)size;
-    return ptr;
-}
-
 inline void *operator new(size_t size, core::IAllocator &allocator) throw() {
     return allocator.alloc(size);
 }
@@ -138,3 +136,5 @@ template <class T>
 inline void operator delete[](void *ptr, core::IAllocator &allocator) throw() {
     allocator.dealloc(ptr);
 }
+
+#endif // MM_IALLOCATOR_H_

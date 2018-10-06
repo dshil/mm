@@ -1,3 +1,6 @@
+#ifndef MM_KR_H_
+#define MM_KR_H_
+
 typedef long Align;
 
 union header {
@@ -13,3 +16,5 @@ typedef union header Header;
 #define BLOCKSIZ 4096
 
 void mfree_arbitrary(void *ptr, size_t size);
+
+#endif // MM_KR_H_

@@ -1,3 +1,6 @@
+#ifndef MM_HEAP_ALLOCATOR_H_
+#define MM_HEAP_ALLOCATOR_H_
+
 #include "iallocator.h"
 
 namespace core {
@@ -11,3 +14,5 @@ public:
 };
 
 } // namespace core
+
+#endif // MM_HEAP_ALLOCATOR_H_

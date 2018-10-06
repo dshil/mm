@@ -1,3 +1,6 @@
+#ifndef MM_UTILS_H_
+#define MM_UTILS_H_
+
 #ifndef __WORDSIZE
 #define __WORDSIZE (__SIZEOF_LONG__ * 8)
 #endif // ifdef __WORDSIZE
@@ -23,3 +26,5 @@ size_t safe_mul(size_t count, size_t size);
 
 unsigned next_pow_of_2(size_t size);
 int is_pow_of_2(size_t size);
+
+#endif // MM_UTILS_H_

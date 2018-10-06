@@ -1,3 +1,6 @@
+#ifndef MM_BUDDY_H_
+#define MM_BUDDY_H_
+
 /*
  * Element of the implicit linked list of free blocks.
  */
@@ -21,3 +24,5 @@ typedef struct _buddy_meta {
  * time finding level of the freed block.
  */
 void mfree_bytes(void *ptr, size_t size);
+
+#endif // MM_BUDDY_H_
